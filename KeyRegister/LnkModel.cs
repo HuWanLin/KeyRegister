@@ -23,6 +23,9 @@ namespace KeyRegister
 
         public string HotKey { get; set; }
 
+        /// <summary>
+        /// 注册快捷键的主键ID
+        /// </summary>
         public int id { get; set; }
     }
 }

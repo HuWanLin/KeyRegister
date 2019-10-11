@@ -16,6 +16,7 @@ namespace KeyRegister
         /// 程序名字
         /// </summary>
         public string LnkName { get; set; }
+
         public IntPtr MianIntPtr { get; set; }
 
         public keyAdd()
@@ -23,6 +24,11 @@ namespace KeyRegister
             InitializeComponent();
         }
 
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="mainIntPtr"></param>
         public keyAdd(String name, IntPtr mainIntPtr)
         {
             InitializeComponent();
@@ -30,8 +36,12 @@ namespace KeyRegister
             MianIntPtr = mainIntPtr;
         }
 
-        //释放键发生 
 
+        /// <summary>
+        /// 释放键发生事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TextBox1_KeyUp(object sender, KeyEventArgs e)
         {
             //焦点放给按钮

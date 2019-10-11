@@ -36,7 +36,10 @@ namespace KeyRegister
             BindingDgv(false);
         }
 
-
+        /// <summary>
+        /// 获取路径文件，绑定列表数据，同步程序数据
+        /// </summary>
+        /// <param name="flagReset">是否同步数据</param>
         private void BindingDgv(bool flagReset)
         {
             List<LnkModel> lnkList = new LnkPath().ListLnkModel();
@@ -87,7 +90,10 @@ namespace KeyRegister
                     if (item.id == 0)  //没有注册过                    
                         Resources.dicThis.Remove(item.LnkName);
                     else
+                    {
                         Resources.dicThisInt.Remove(item.id);
+                        SystemHotKey.UnregisterHotKey(Handle, item.id);
+                    }                        
                 }
                 dataGridView1.DataSource = lnkList;
             }
@@ -124,8 +130,7 @@ namespace KeyRegister
                 Resources.dicThisInt = new Dictionary<int, LnkModel>();
                 List<LnkModel> lnkList = new LnkPath().ListLnkModel();
                 if (lnkList != null)
-                {
-                    //主键程序名  值是lnk对象
+                {                    
                     foreach (LnkModel lnkModel in lnkList)
                     {
                         //没有注册 放入
@@ -142,13 +147,12 @@ namespace KeyRegister
         }
 
         /// <summary>
-        /// 窗体关闭事件 
+        /// 窗体关闭事件  退出程序时缷载快捷键，保存文件
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e) //退出程序时缷载热键 
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e) 
         {
-
             Uninstall();
             XmlFile.ObjListToXml();
         }
@@ -176,7 +180,6 @@ namespace KeyRegister
         {
             //获取程序名字
             string lnkName = dataGridView1.SelectedRows[0].Cells["Column1"].Value.ToString();
-
             //注册快捷键窗口
             keyAdd keyAdd = new keyAdd(lnkName, Handle);
             keyAdd.Show();
@@ -201,16 +204,15 @@ namespace KeyRegister
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void Form1_Activated(object sender, EventArgs e)
-        {
-            //改变数据后，重新绑定数据
+        {           
             dataGridView1.DataSource = Resources.DicThisToLnkList();
         }
 
         private void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)              //用户单击托盘图标，判断用户单击是不是左键
+            if (e.Button == MouseButtons.Left)             
             {
-                this.WindowState = FormWindowState.Normal;               //弹出最大化当前窗口
+                this.WindowState = FormWindowState.Normal;               
             }
         }
 

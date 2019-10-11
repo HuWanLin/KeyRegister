@@ -12,10 +12,10 @@ namespace KeyRegister
     public class LnkPath
     {
         /// <summary>
-        /// 获取 lnk 的路径
+        /// 获取 exe 的路径
         /// </summary>
         /// <param name="path"> lnk 的路径</param>
-        /// <returns></returns>
+        /// <returns>exe的路径</returns>
         private string ObtainLnkPath(string path)
         {
             try
@@ -38,7 +38,7 @@ namespace KeyRegister
         /// 读取文件夹的下的所有 lnk
         /// </summary>
         /// <param name="path">文件夹路径</param>
-        /// <returns></returns>
+        /// <returns>所有文件的全路径</returns>
         public List<string> getPath(string path)
         {
             List<string> list = new List<string>();//定义list变量，存放获取到的路径            
