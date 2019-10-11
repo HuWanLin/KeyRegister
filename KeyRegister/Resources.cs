@@ -14,7 +14,7 @@ namespace KeyRegister
     public class Resources
     {
         /// <summary>
-        /// 注册快捷键的Id
+        /// 注册快捷键的Id  用于+1向系统注册快捷键的下一个ID
         /// </summary>
         public static int MaxNum = 1;
 
@@ -29,12 +29,12 @@ namespace KeyRegister
         public static Dictionary<int, LnkModel> dicThisInt = new Dictionary<int, LnkModel>();
 
         /// <summary>
-        /// exe 路径
+        /// 程序路径
         /// </summary>
         public static String exePath;
 
         /// <summary>
-        /// lnkPath 文件夹的位置 
+        /// 快捷方式文件夹的路径 
         /// </summary>
         public static String lnkPath;
 
@@ -54,23 +54,24 @@ namespace KeyRegister
         public static Keys keySan;
 
         /// <summary>
-        /// 判断已经注册过
+        /// 判断注册 false有 true没有
         /// </summary>
         /// <param name="lnkModel"></param>
         public static bool HandleDicThisInt(String LnkName)
         {
-            foreach (var item in dicThisInt)
+            if (dicThisInt != null)
             {
-                if (LnkName == item.Value.LnkName)
+                foreach (var item in dicThisInt)
                 {
-                    return false;
+                    if (LnkName == item.Value.LnkName)
+                        return false;
                 }
             }
             return true;
         }
 
         /// <summary>
-        /// 判断 没有注册过
+        /// 判断没注册  false有 true没有
         /// </summary>
         /// <param name="lnkModel"></param>
         public static bool HandleDicThis(String LnkName)
@@ -86,7 +87,7 @@ namespace KeyRegister
         }
 
         /// <summary>
-        /// 将注册的程序放到 dicThisInt
+        /// 将注册的快捷方式放到 dicThisInt
         /// </summary>
         public static void Transformation()
         {
@@ -95,6 +96,8 @@ namespace KeyRegister
             //放到 dicThisInt
             foreach (var item in dicThis)
             {
+                if (dicThisInt == null)
+                    Resources.dicThisInt = new Dictionary<int, LnkModel>();
                 if (item.Value.id != 0 && !dicThisInt.ContainsKey(item.Value.id))
                 {
                     dicThisInt.Add(item.Value.id, item.Value);
@@ -109,9 +112,9 @@ namespace KeyRegister
         }
 
         /// <summary>
-        /// Dictionary 转 List ; 包含 已注册 和 未注册
+        /// Dictionary转List;包含已注册和未注册
         /// </summary>
-        /// <returns></returns>
+        /// <returns>所有的程序信息</returns>
         public static List<LnkModel> DicThisToLnkList()
         {
             List<LnkModel> lnkList = new List<LnkModel>();
@@ -121,38 +124,53 @@ namespace KeyRegister
                 LnkModel lnkModel = new LnkModel();
                 lnkModel.LnkName = item.Value.LnkName;
                 lnkModel.HotKey = item.Value.HotKey;
+                lnkModel.id = 0;
 
                 lnkList.Add(lnkModel);
             }
             //已注册快捷键的程序 
-            foreach (var item in Resources.dicThisInt)
+            if (Resources.dicThisInt != null)
             {
-                LnkModel lnkModel = new LnkModel();
-                lnkModel.LnkName = item.Value.LnkName;
-                lnkModel.HotKey = item.Value.HotKey;
+                foreach (var item in Resources.dicThisInt)
+                {
+                    LnkModel lnkModel = new LnkModel();
+                    lnkModel.LnkName = item.Value.LnkName;
+                    lnkModel.HotKey = item.Value.HotKey;
+                    lnkModel.id = item.Value.id;
 
-                lnkList.Add(lnkModel);
+                    lnkList.Add(lnkModel);
+                }
             }
             return lnkList;
         }
-        
+
+        /// <summary>
+        /// 注册快捷键
+        /// </summary>
+        /// <param name="mainIntPtr"></param>
         public static void RegistrationKey(IntPtr mainIntPtr)
         {
-            foreach (var item in Resources.dicThisInt)
-            {
-                String[] stringKey = item.Value.HotKey.Split('+');
-                SystemHotKey.KeyModifiers[] key = StringToKey(stringKey);               
-                SystemHotKey.RegisterHotKey(mainIntPtr, item.Key, (uint)key[0] | (uint)key[1], signKey(stringKey[2]));
-            }
+            if (Resources.dicThisInt != null)
+                foreach (var item in Resources.dicThisInt)
+                {
+                    String[] stringKey = item.Value.HotKey.Split('+');
+                    SystemHotKey.KeyModifiers[] key = StringToKey(stringKey);
+                    SystemHotKey.RegisterHotKey(mainIntPtr, item.Key, (uint)key[0] | (uint)key[1], signKey(stringKey[2]));
+                }
         }
 
+        /// <summary>
+        /// 获取用户输入的键位
+        /// </summary>
+        /// <param name="stringKey"></param>
+        /// <returns></returns>
         private static SystemHotKey.KeyModifiers[] StringToKey(String[] stringKey)
         {
             SystemHotKey.KeyModifiers[] key = new SystemHotKey.KeyModifiers[2];
-            for (int i = 0; i < stringKey.Count()-1; i++)
+            for (int i = 0; i < stringKey.Count() - 1; i++)
             {
-                if (stringKey[i] == "Ctrl")                
-                    key[i] = SystemHotKey.KeyModifiers.Ctrl;                
+                if (stringKey[i] == "Ctrl")
+                    key[i] = SystemHotKey.KeyModifiers.Ctrl;
                 if (stringKey[i] == "Shift")
                     key[i] = SystemHotKey.KeyModifiers.Shift;
                 if (stringKey[i] == "Alt")
@@ -249,7 +267,7 @@ namespace KeyRegister
                     break;
                 case "Z":
                     keys = Keys.Z;
-                    break;              
+                    break;
             }
             return keys;
         }

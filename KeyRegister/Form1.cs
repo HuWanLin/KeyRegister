@@ -14,74 +14,130 @@ using IWshRuntimeLibrary;
 namespace KeyRegister
 {
     public partial class Form1 : Form
-    {       
+    {
         public Form1()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// 窗体加载事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Form1_Load(object sender, EventArgs e)
-        {           
-            Resources.exePath = Application.StartupPath;            
-            Resources.dicThisInt = XmlFile.ReadXmlFile();
-            //没有读取到路径
-            if (Resources.lnkPath != "0")
-            {
-                checkBox1.Checked = false;
-            }
-
-            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;        
+        {
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridView1.AutoGenerateColumns = false;
-                       
-            List<LnkModel> lnkList = new LnkPath().ListLnkModel(false);
-            if (lnkList.Count != 0)   //读取到了 lnk 文件
+
+            Resources.exePath = Application.StartupPath;
+            Resources.dicThisInt = XmlFile.ReadXmlFile();
+
+            BindingDgv(false);
+        }
+
+
+        private void BindingDgv(bool flagReset)
+        {
+            List<LnkModel> lnkList = new LnkPath().ListLnkModel();
+            if (lnkList == null)  //有其它的文件
             {
-                //主键程序名  值是lnk对象
-                foreach (LnkModel lnkModel in lnkList)
+                DialogResult dr = MessageBox.Show("文件夹有非 lnk 文件！请修改路径或者删除非 lnk 文件。", "选择提醒", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                if (dr == DialogResult.Cancel)
                 {
-                    //没有注册 放入
-                    if (Resources.HandleDicThisInt(lnkModel.LnkName))
+                    Application.Exit();
+                }
+                if (dr == DialogResult.OK)
+                {
+                    XmlFile.ChoiceLnkFile();
+                    BindingDgv(false);
+                }
+            }
+            foreach (LnkModel lnkModel in lnkList)
+            {
+                if (Resources.HandleDicThisInt(lnkModel.LnkName))
+                {
+                    if (Resources.HandleDicThis(lnkModel.LnkName))
                     {
                         Resources.dicThis.Add(lnkModel.LnkName, lnkModel);
                     }
                 }
-                lnkList = Resources.DicThisToLnkList();
+            }
+            List<LnkModel> lnkListData = Resources.DicThisToLnkList();
+            if (flagReset)
+            {
+                List<LnkModel> lnkListString = new List<LnkModel>();
+                foreach (LnkModel item in lnkListData)   //有的数据
+                {
+                    bool flag = true;
+                    foreach (var item2 in lnkList)    //获取到的数据
+                    {
+                        if (item.LnkName == item2.LnkName)
+                        {
+                            flag = false;
+                        }
+                    }
+                    if (flag)
+                    {
+                        lnkListString.Add(item);
+                    }
+                }
+                foreach (LnkModel item in lnkListString)
+                {
+                    if (item.id == 0)  //没有注册过                    
+                        Resources.dicThis.Remove(item.LnkName);
+                    else
+                        Resources.dicThisInt.Remove(item.id);
+                }
                 dataGridView1.DataSource = lnkList;
             }
-            else
+            if (lnkList.Count == 0)
             {
-                MessageBox.Show("默认路径文件夹 lnkFile 不包含快捷方式文件，或有非 lnk 文件！请修改路径或放入 lnk 文件！", "选择提醒", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                checkBox1.Checked = false;
-            }           
+                try
+                {
+                    Resources.dicThis.Clear();
+                    Resources.dicThisInt.Clear();
+                }
+                catch (Exception)
+                {
+                    //throw;
+                }
+                lnkListData.Clear();
+            }
+            dataGridView1.DataSource = lnkListData;
 
             //注册快捷键
             Resources.RegistrationKey(Handle);
         }
 
+        /// <summary>
+        /// 更改文件夹 单击事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Button1_Click(object sender, EventArgs e)
         {
-            checkBox1.Checked = false;
-            dataGridView1.AutoGenerateColumns = false;
-
-            List<LnkModel> lnkList = new LnkPath().ListLnkModel(true);
-            if (lnkList != null)
+            if (XmlFile.ChoiceLnkFile())
             {
-                //主键程序名  值是lnk对象
-                foreach (LnkModel lnkModel in lnkList)
+                Uninstall();
+                Resources.dicThis = new Dictionary<string, LnkModel>();
+                Resources.dicThisInt = new Dictionary<int, LnkModel>();
+                List<LnkModel> lnkList = new LnkPath().ListLnkModel();
+                if (lnkList != null)
                 {
-                    //没有注册 放入
-                    if (Resources.HandleDicThisInt(lnkModel.LnkName) && Resources.HandleDicThis(lnkModel.LnkName))
+                    //主键程序名  值是lnk对象
+                    foreach (LnkModel lnkModel in lnkList)
                     {
-                        Resources.dicThis.Add(lnkModel.LnkName, lnkModel);
+                        //没有注册 放入
+                        if (Resources.HandleDicThisInt(lnkModel.LnkName) && Resources.HandleDicThis(lnkModel.LnkName))
+                        {
+                            Resources.dicThis.Add(lnkModel.LnkName, lnkModel);
+                        }
                     }
+                    lnkList = Resources.DicThisToLnkList();
+                    dataGridView1.DataSource = lnkList;
                 }
-                lnkList = Resources.DicThisToLnkList();
-                dataGridView1.DataSource = lnkList;
-            }
-            else
-            {
-                MessageBox.Show("请选择只包含有快捷方式的文件夹", "选择提醒", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                checkBox1.Checked = false;
+                BindingDgv(false);
             }
         }
 
@@ -92,16 +148,22 @@ namespace KeyRegister
         /// <param name="e"></param>
         private void Form1_FormClosing(object sender, FormClosingEventArgs e) //退出程序时缷载热键 
         {
-            //循环卸载注册过的快捷键
-            foreach (var item in Resources.dicThisInt)
-            {
-                SystemHotKey.UnregisterHotKey(Handle, item.Key);
-            }
 
-            //保存配置文件
-            if (Resources.lnkPath != "0" || Resources.lnkPath != null || Resources.dicThisInt.Count != 0)
+            Uninstall();
+            XmlFile.ObjListToXml();
+        }
+
+        /// <summary>
+        /// 循环卸载注册过的快捷键
+        /// </summary>
+        private void Uninstall()
+        {
+            if (Resources.dicThisInt != null)
             {
-                XmlFile.ObjListToXml(Resources.dicThisInt);
+                foreach (var item in Resources.dicThisInt)
+                {
+                    SystemHotKey.UnregisterHotKey(Handle, item.Key);
+                }
             }
         }
 
@@ -186,7 +248,18 @@ namespace KeyRegister
             //显示主窗体
             this.Show();
         }
+
+        /// <summary>
+        /// 刷新单击事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            BindingDgv(true);
+        }
     }
 }
+
 
 

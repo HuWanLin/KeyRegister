@@ -13,9 +13,15 @@ using System.Drawing;
 
 namespace KeyRegister
 {
+    /// <summary>
+    /// 调用 API 的类
+    /// </summary>
     public class SystemHotKey
-    {        
-        public enum KeyModifiers //组合键枚举  
+    {
+        /// <summary>
+        /// 组合键枚举
+        /// </summary>
+        public enum KeyModifiers   
         {
             None = 0,
             Alt = 1,
@@ -68,14 +74,14 @@ namespace KeyRegister
         public static void ProcessHotkey(Message m) //按下设定的键时调用该函数 
         {
             IntPtr id = m.WParam; //IntPtr用于表示指针或句柄的平台特定类型              
-        
+
             for (int i = 1; i < Resources.MaxNum; i++)  //注册了多少个循环多少次
-            {
+            {              
                 if (id.ToString() == i.ToString())
-                { 
+                {
                     //读取信息，打开程序
-                    String txtOne = Resources.dicThisInt[i].LnkName;
-                    string txtTwo= Resources.dicThisInt[i].LnkPath;
+                    String txtOne = Resources.dicThisInt[i].LnkPath;
+                    string txtTwo = Resources.dicThisInt[i].LnkName;                   
                     ShellExecute(IntPtr.Zero, new StringBuilder("Open"), new StringBuilder(txtOne), new StringBuilder(""), new StringBuilder(txtTwo), 1);
                 }
             }
@@ -93,7 +99,5 @@ namespace KeyRegister
         /// <returns></returns>
         [DllImport("shell32.dll")]
         public static extern int ShellExecute(IntPtr hwnd, StringBuilder lpszOp, StringBuilder lpszFile, StringBuilder lpszParams, StringBuilder lpszDir, int FsShowCmd);
-
-       
     }
 }

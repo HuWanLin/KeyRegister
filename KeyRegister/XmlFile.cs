@@ -5,53 +5,55 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace KeyRegister
 {
+    /// <summary>
+    /// XML 数据文件处理类
+    /// </summary>
     public class XmlFile
     {
        　/// <summary>
-        /// 保存信息
-        /// </summary>
-        /// <param name="dicThisInt">信息对象</param>
-        /// <param name="sign">保存 lnk 文件夹路径</param>
-        public static void ObjListToXml(Dictionary<int, LnkModel> dicThisInt)
+        /// 保存数据到XML文件
+        /// </summary>            
+        public static void ObjListToXml()
         {
-
             XmlDocument xmlDoc = new XmlDocument();
             XmlDeclaration xmlSM = xmlDoc.CreateXmlDeclaration("1.0", "UTF-8", null);
             xmlDoc.AppendChild(xmlSM);
             XmlElement xml = xmlDoc.CreateElement("", "KeyRegister", "");
             xmlDoc.AppendChild(xml);
             XmlNode gen = xmlDoc.SelectSingleNode("KeyRegister");
-
-            foreach (var item in dicThisInt)
+            if (Resources.dicThisInt != null)
             {
-                XmlElement dicThisIntXml = xmlDoc.CreateElement("dicThisInt");
+                foreach (var item in Resources.dicThisInt)
+                {
+                    XmlElement dicThisIntXml = xmlDoc.CreateElement("dicThisInt");
 
-                XmlElement x1 = xmlDoc.CreateElement("id");
-                x1.InnerText = item.Value.id.ToString();
-                dicThisIntXml.AppendChild(x1);
+                    XmlElement x1 = xmlDoc.CreateElement("id");
+                    x1.InnerText = item.Value.id.ToString();
+                    dicThisIntXml.AppendChild(x1);
 
-                XmlElement x2 = xmlDoc.CreateElement("LnkName");
-                x2.InnerText = item.Value.LnkName;
-                dicThisIntXml.AppendChild(x2);
+                    XmlElement x2 = xmlDoc.CreateElement("LnkName");
+                    x2.InnerText = item.Value.LnkName;
+                    dicThisIntXml.AppendChild(x2);
 
-                XmlElement x3 = xmlDoc.CreateElement("LnkPath");
-                x3.InnerText = item.Value.LnkPath;
-                dicThisIntXml.AppendChild(x3);
+                    XmlElement x3 = xmlDoc.CreateElement("LnkPath");
+                    x3.InnerText = item.Value.LnkPath;
+                    dicThisIntXml.AppendChild(x3);
 
-                XmlElement x4 = xmlDoc.CreateElement("HotKey");
-                x4.InnerText = item.Value.HotKey;
-                dicThisIntXml.AppendChild(x4);
+                    XmlElement x4 = xmlDoc.CreateElement("HotKey");
+                    x4.InnerText = item.Value.HotKey;
+                    dicThisIntXml.AppendChild(x4);
 
-                gen.AppendChild(dicThisIntXml);
+                    gen.AppendChild(dicThisIntXml);
+                }
             }
 
-            //保存用户设置的路径
-            if (Resources.lnkPath !="0" && Resources.lnkPath!=null)
+            if (Resources.lnkPath != "0" && Resources.lnkPath != null)
             {
                 XmlElement lnkPathXml = xmlDoc.CreateElement("lnkPath");
                 XmlElement x1 = xmlDoc.CreateElement("path");
@@ -60,26 +62,26 @@ namespace KeyRegister
                 gen.AppendChild(lnkPathXml);
             }
 
-            //保存配置文件到和 exe 同一目录
-            xmlDoc.Save(Resources.exePath+"//config.xml");
+            //保存配置文件到和程序同一目录
+            xmlDoc.Save(Resources.exePath + "//config.xml");
         }
 
         /// <summary>
-        /// 记取指定格式的 xml 文件 获取已注册和 lnk 文件夹路径
-        /// </summary>
-        /// <param name="path">xml文件的路径</param>
+        /// 读取指定格式的xml文件,获取已注册过的快捷方式信息和文件夹路径
+        /// </summary>        
         /// <returns> Dictionary 对象</returns>
         public static Dictionary<int, LnkModel> ReadXmlFile()
         {
+            //读取不到配置文件
+            if (!File.Exists(Resources.exePath + "\\config.xml"))
+            {
+                ChoiceLnkFile();
+                return null;
+            }
+
             Dictionary<int, LnkModel> dicThisInt = new Dictionary<int, LnkModel>();
-
             XmlDocument doc = new XmlDocument();
-            //没有配置文件
-            if (!File.Exists(Resources.exePath + "\\config.xml"))           
-                return dicThisInt;         
-
-            doc.Load(Resources.exePath + "\\config.xml");
-            //从 根结点 选取
+            doc.Load(Resources.exePath + "\\config.xml");           
             XmlNodeList list = doc.SelectNodes("/KeyRegister/dicThisInt");
             int MaxNum = 0;
             foreach (XmlElement item in list)
@@ -90,18 +92,17 @@ namespace KeyRegister
                 lnkModel.LnkPath = item.GetElementsByTagName("LnkPath")[0].InnerText;
                 lnkModel.HotKey = item.GetElementsByTagName("HotKey")[0].InnerText;
 
-                //保存到已注册
                 dicThisInt.Add(lnkModel.id, lnkModel);
                 if (lnkModel.id > MaxNum)
                     MaxNum = lnkModel.id;
             }
             Resources.MaxNum = MaxNum + 1;
-
+            //读取文件夹路径
             XmlNodeList listLnkPath = doc.SelectNodes("/KeyRegister/lnkPath");
-            if (listLnkPath.Count==0)
+            if (listLnkPath.Count == 0)
             {
-                Resources.lnkPath = "0";
-            }
+                ChoiceLnkFile();
+            }               
             else
             {
                 foreach (XmlElement item in listLnkPath)
@@ -112,13 +113,41 @@ namespace KeyRegister
                     }
                     catch (Exception)
                     {
-                        Resources.lnkPath = "0";
+                        ChoiceLnkFile();
                     }
                     break;
                 }
-            }                      
+            }
 
             return dicThisInt;
+        }
+
+
+        /// <summary>
+        /// 弹出选择文件夹框
+        /// </summary>
+        /// <returns>改变路径标记</returns>
+        public static bool ChoiceLnkFile()
+        {
+            FolderBrowserDialog folderBrowserDialog1 = new FolderBrowserDialog();
+            folderBrowserDialog1.Description = "请选择只包含有“快捷方式”的文件夹，或空文件夹。";
+            folderBrowserDialog1.ShowNewFolderButton = true;
+            DialogResult dr = folderBrowserDialog1.ShowDialog();
+            if (dr == DialogResult.Cancel)
+                Application.Exit();
+            if (dr == DialogResult.OK)
+            {
+                if (Resources.lnkPath == folderBrowserDialog1.SelectedPath)
+                {
+                    MessageBox.Show("选择的路径没有改变,不更新路径！", "选择提醒", MessageBoxButtons.OK);
+                    return false;
+                }
+                else
+                {
+                    Resources.lnkPath = folderBrowserDialog1.SelectedPath;
+                }
+            }
+            return true;
         }
     }
 }

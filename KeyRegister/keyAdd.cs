@@ -189,9 +189,7 @@ namespace KeyRegister
                     Resources.dicThis[LnkName].HotKey = textBox1.Text;   //对应程序名的  快捷键  修改
                     Resources.dicThis[LnkName].id = Resources.MaxNum;    //对应程序名的  注册Id  修改
                     Resources.MaxNum++;    //注册Id++                    
-                }               
-
-                //放入已注册的 键值对 对象 
+                }
                 Resources.Transformation();
             }
             this.Close();

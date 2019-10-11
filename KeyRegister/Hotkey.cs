@@ -98,7 +98,7 @@ namespace KeyRegister
         }       
 
         /// <summary>
-        /// 调用外部 exe
+        /// 调用外部 exe API函数
         /// </summary>
         /// <param name="hwnd"></param>
         /// <param name="lpszOp"></param>
@@ -109,7 +109,5 @@ namespace KeyRegister
         /// <returns></returns>
         [DllImport("shell32.dll")]
         public static extern int ShellExecute(IntPtr hwnd, StringBuilder lpszOp, StringBuilder lpszFile, StringBuilder lpszParams, StringBuilder lpszDir, int FsShowCmd);
-
-
     }
 }
